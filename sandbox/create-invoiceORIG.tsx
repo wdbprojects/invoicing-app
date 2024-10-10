@@ -1,12 +1,7 @@
 "use client";
 
+import { useFormState } from "react-dom";
 import { useActionState, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { invoiceSchema } from "@/lib/zod-schemas";
-import { createInvoiceAction } from "@/app/actions/create-invoice-action";
-
 import {
   Form,
   FormControl,
@@ -15,18 +10,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { createInvoiceAction } from "@/app/actions/create-invoice-action";
+import { createInvoiceSchema } from "@/lib/zod-schemas";
+import { type CreateInvoiceType } from "@/lib/zod-schemas";
 
-const CreateInvoice = () => {
-  const [state, formAction] = useActionState(createInvoiceAction, {
+const CreateInvoice = ({
+  createInvoiceAction,
+}: {
+  createInvoiceAction: (prevState: {
+    message: string;
+    invoice?: CreateInvoiceType;
+    issues?: string[];
+  }) => Promise<{
+    message: string;
+    invoice?: CreateInvoiceType;
+    issues?: string[];
+  }>;
+}) => {
+  const [state, formAction] = useFormState(createInvoiceAction, {
     message: "",
   });
 
-  const form = useForm<z.infer<typeof invoiceSchema>>({
-    resolver: zodResolver(invoiceSchema),
+  const form = useForm<CreateInvoiceType>({
+    resolver: zodResolver(createInvoiceSchema),
     defaultValues: {
       billingName: "",
       billingEmail: "",
@@ -42,27 +53,17 @@ const CreateInvoice = () => {
     formState: { isSubmitting },
   } = form;
 
-  const formRef = useRef<HTMLFormElement>(null);
+  const onSubmit = (data: CreateInvoiceType) => {
+    console.log(data);
+    reset();
+  };
 
-  console.log("isSubmitting:", isSubmitting);
+  const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <Form {...form}>
       {state?.message !== "" && !state.issues && (
-        <p className="text-red-500">{state.message}</p>
-      )}
-      {state?.issues && (
-        <div className="text-red-500">
-          <ul>
-            {state.issues.map((issue) => {
-              return (
-                <li key={issue} className="flex gap-1">
-                  {issue}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <h2 className="text-blue-700 font-medium text-xl">{state?.message}</h2>
       )}
       <form
         ref={formRef}
@@ -71,7 +72,6 @@ const CreateInvoice = () => {
           event.preventDefault();
           handleSubmit(() => {
             formAction(new FormData(formRef.current!));
-            reset();
           })(event);
         }}
         className="space-y-4"
@@ -121,13 +121,16 @@ const CreateInvoice = () => {
           render={({ field }) => {
             return (
               <FormItem>
-                <FormLabel>Amount</FormLabel>
+                <FormLabel>Value</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Enter your billing amount"
+                    placeholder="Enter your billing value"
                     {...field}
                     autoComplete="off"
+                    onChange={(event) => {
+                      field.onChange(Number(event.target.value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -166,10 +169,7 @@ const CreateInvoice = () => {
           >
             Reset
           </Button>
-          <Button className="flex-1" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <span>Submit form</span>
-          </Button>
+          <Button className="flex-1">Submit form</Button>
         </div>
       </form>
     </Form>

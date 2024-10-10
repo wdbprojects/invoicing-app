@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { db } from "@/db";
+import { Invoices } from "@/db/schema";
+
 import DarkMode from "@/components/shared/dark-mode";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,10 +16,9 @@ import {
 } from "@/components/ui/table";
 import { CirclePlus } from "lucide-react";
 
-import { invoices } from "@/lib/data";
-import Link from "next/link";
+const Dashboard = async () => {
+  const realInvoices = await db.select().from(Invoices);
 
-const Dashboard = () => {
   return (
     <main className="flex flex-col items-center min-h-screen text-center max-w-5xl mx-auto space-y-8 p-8">
       <div className="flex justify-between items-center w-full">
@@ -32,7 +35,7 @@ const Dashboard = () => {
         <TableCaption>A list of your recent invoices</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[150px] p-4">Date</TableHead>
+            <TableHead className="w-[200px] p-4">Date</TableHead>
             <TableHead className="p-4">Customer</TableHead>
             <TableHead className="p-4">Email</TableHead>
             <TableHead className="text-center p-4">Status</TableHead>
@@ -40,26 +43,39 @@ const Dashboard = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invoices?.map((item) => {
-            const { id, date, customer, email, status, value } = item;
+          {realInvoices?.map((item) => {
+            const { id, createTs, description, status, value } = item;
             return (
-              <TableRow key={id}>
-                <TableCell className="text-left font-semibold p-4">
-                  <span>{date}</span>
+              <TableRow key={id} className="">
+                <TableCell className="text-left font-semibold p-0">
+                  <Link href={`/invoices/${id}`} className="p-4 block">
+                    {createTs.toDateString()}
+                  </Link>
                 </TableCell>
-                <TableCell className="text-left p-4">
-                  <span className="font-semibold">{customer}</span>
+                <TableCell className="text-left p-0">
+                  <Link
+                    href={`/invoices/${id}`}
+                    className="font-semibold p-4 block"
+                  >
+                    Emily Blunt
+                  </Link>
                 </TableCell>
-                <TableCell className="text-left text-muted-foreground p-4">
-                  <span>{email}</span>
+                <TableCell className="text-left text-muted-foreground p-0">
+                  <Link href={`/invoices/${id}`} className="p-4 block">
+                    emily@bluntprod.com
+                  </Link>
                 </TableCell>
-                <TableCell className="text-center p-4">
-                  <Badge variant="default" className="rounded-full">
-                    {status}
-                  </Badge>
+                <TableCell className="text-center p-0">
+                  <Link href={`/invoices/${id}`} className="p-4 block">
+                    <Badge variant="default" className="rounded-full">
+                      {status}
+                    </Badge>
+                  </Link>
                 </TableCell>
-                <TableCell className="text-right p-4">
-                  <span>{value}</span>
+                <TableCell className="text-right p-0">
+                  <Link href={`/invoices/${id}`} className="p-4 block">
+                    $ {(value / 100).toFixed(2)}
+                  </Link>
                 </TableCell>
               </TableRow>
             );
